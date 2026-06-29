@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChargeIntel Italy — CPO Pricing Strategy Tool</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <div class="container header-inner">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <div>
+          <div class="logo-name">ChargeIntel <span class="flag">🇮🇹</span></div>
+          <div class="logo-sub">CPO Pricing Strategy Tool · Italy</div>
+        </div>
+      </div>
+      <div class="live-badge">
+        <span class="pulse-dot"></span>
+        <span id="data-status">Loading live data…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── ALERT BAR ── -->
+  <div class="alert-bar">
+    <div class="container">
+      ⚠️ <strong>AFIR Art.5 + ARERA transparency rules</strong> — Italy mandates published ad-hoc prices at every public charging station. Non-compliance risks fines up to €100,000 per violation.
+    </div>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <main class="container">
+
+    <!-- NAV TABS -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="calculator">Pricing calculator</button>
+      <button class="tab" data-tab="market">Market benchmarks</button>
+      <button class="tab" data-tab="compliance">Compliance checker</button>
+    </nav>
+
+    <!-- ════════════════════════════════════════
+         TAB 1: CALCULATOR
+    ════════════════════════════════════════ -->
+    <section id="tab-calculator" class="tab-content active">
+
+      <div class="two-col">
+
+        <!-- LEFT: Inputs -->
+        <div class="inputs-panel">
+
+          <div class="panel-section">
+            <div class="section-label">1 — Your operating costs</div>
+            <div class="slider-row">
+              <label>Electricity purchase price</label>
+              <input type="range" id="elec" min="0.05" max="0.35" step="0.01" value="0.18" />
+              <span class="val" id="elec-v">€0.18/kWh</span>
+            </div>
+            <div class="slider-row">
+              <label>Roaming / platform fee</label>
+              <input type="range" id="net" min="0" max="0.10" step="0.005" value="0.03" />
+              <span class="val" id="net-v">€0.030/kWh</span>
+            </div>
+            <div class="slider-row">
+              <label>Hardware amortisation (AC base)</label>
+              <input type="range" id="capex" min="0.01" max="0.20" step="0.005" value="0.07" />
+              <span class="val" id="capex-v">€0.070/kWh</span>
+            </div>
+            <div class="slider-row">
+              <label>Ops &amp; maintenance</label>
+              <input type="range" id="ops" min="0.01" max="0.10" step="0.005" value="0.04" />
+              <span class="val" id="ops-v">€0.040/kWh</span>
+            </div>
+            <div class="slider-row">
+              <label>Target margin</label>
+              <input type="range" id="margin" min="5" max="50" step="1" value="20" />
+              <span class="val" id="margin-v">20%</span>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-label">2 — Charger type cost multipliers</div>
+            <p class="hint">DC and HPC have higher capex and peak demand charges than AC.</p>
+            <div class="slider-row">
+              <label>DC capex multiplier vs AC</label>
+              <input type="range" id="dc-mult" min="1.0" max="3.0" step="0.1" value="1.8" />
+              <span class="val" id="dc-mult-v">×1.8</span>
+            </div>
+            <div class="slider-row">
+              <label>HPC capex multiplier vs AC</label>
+              <input type="range" id="hpc-mult" min="1.5" max="5.0" step="0.1" value="3.2" />
+              <span class="val" id="hpc-mult-v">×3.2</span>
+            </div>
+            <div class="slider-row">
+              <label>Peak demand surcharge (DC/HPC)</label>
+              <input type="range" id="peak" min="0" max="0.08" step="0.005" value="0.025" />
+              <span class="val" id="peak-v">€0.025/kWh</span>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <div class="section-label">3 — Strategy &amp; location</div>
+            <div class="select-row">
+              <label>Location type</label>
+              <select id="location">
+                <option value="urban">Urban / city centre</option>
+                <option value="highway" selected>Highway / motorway</option>
+                <option value="destination">Destination / shopping</option>
+                <option value="residential">Residential / workplace</option>
+              </select>
+            </div>
+            <div class="select-row">
+              <label>Pricing strategy</label>
+              <select id="strategy">
+                <option value="competitive">Competitive — beat market avg</option>
+                <option value="market" selected>Market rate — match avg</option>
+                <option value="premium">Premium — above avg</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Results -->
+        <div class="results-panel">
+
+          <!-- KPI cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-type">AC <span class="kpi-power">7–22 kW</span></div>
+              <div class="kpi-price" id="out-ac">—</div>
+              <div class="kpi-break" id="be-ac">breakeven —</div>
+              <div class="kpi-margin" id="mg-ac">— margin</div>
+              <div class="kpi-badge" id="badge-ac"></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-type">DC <span class="kpi-power">50–150 kW</span></div>
+              <div class="kpi-price" id="out-dc">—</div>
+              <div class="kpi-break" id="be-dc">breakeven —</div>
+              <div class="kpi-margin" id="mg-dc">— margin</div>
+              <div class="kpi-badge" id="badge-dc"></div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-type">HPC <span class="kpi-power">150–350 kW</span></div>
+              <div class="kpi-price" id="out-hpc">—</div>
+              <div class="kpi-break" id="be-hpc">breakeven —</div>
+              <div class="kpi-margin" id="mg-hpc">— margin</div>
+              <div class="kpi-badge" id="badge-hpc"></div>
+            </div>
+          </div>
+
+          <!-- Chart -->
+          <div class="chart-card">
+            <div class="chart-legend">
+              <span class="leg-item"><span class="leg-dot" style="background:#2a78d6"></span>Your price</span>
+              <span class="leg-item"><span class="leg-dot" style="background:#c3c2b7"></span>Italy avg <span id="data-source-tag" class="source-tag">loading…</span></span>
+            </div>
+            <div style="position:relative;height:200px;">
+              <canvas id="priceChart" role="img" aria-label="Bar chart comparing your prices against Italian CPO averages"></canvas>
+            </div>
+          </div>
+
+          <!-- Market rank -->
+          <div class="rank-card">
+            <div class="rank-title">Your DC rank among Italian CPOs</div>
+            <div id="rank-list" class="rank-list"></div>
+            <div class="rank-footer" id="rank-footer">— data loading —</div>
+          </div>
+
+          <!-- AI advisor -->
+          <div class="ai-card">
+            <div class="ai-header">
+              <span class="ai-title">AI pricing advisor</span>
+              <span class="ai-sub">Claude · live Italy CPO context</span>
+            </div>
+            <div class="ai-body" id="ai-msg">
+              Set your costs above, then click "Get AI recommendation" for a personalised strategy.
+            </div>
+            <button class="ai-btn" id="ai-btn" onclick="askAI()">Get AI recommendation ↗</button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         TAB 2: MARKET BENCHMARKS
+    ════════════════════════════════════════ -->
+    <section id="tab-market" class="tab-content">
+      <div class="market-header">
+        <div>
+          <div class="section-label" style="margin-bottom:4px">Italian CPO price benchmarks</div>
+          <div class="hint" id="market-timestamp">Data last refreshed: loading…</div>
+        </div>
+        <button class="refresh-btn" onclick="refreshData()">↻ Refresh data</button>
+      </div>
+
+      <div class="type-tabs">
+        <button class="type-tab active" data-type="dc" onclick="switchType('dc',this)">DC (50–150 kW)</button>
+        <button class="type-tab" data-type="ac" onclick="switchType('ac',this)">AC (7–22 kW)</button>
+        <button class="type-tab" data-type="hpc" onclick="switchType('hpc',this)">HPC (150–350 kW)</button>
+      </div>
+
+      <div class="market-table-wrap">
+        <table class="market-table" id="market-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>CPO</th>
+              <th>Operator ID</th>
+              <th>Stations</th>
+              <th>Price</th>
+              <th>Platform</th>
+              <th>Compliance</th>
+              <th>Source</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody id="market-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="market-chart-wrap">
+        <div style="position:relative;height:260px;">
+          <canvas id="marketChart" role="img" aria-label="Bar chart of Italian CPO prices"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════
+         TAB 3: COMPLIANCE
+    ════════════════════════════════════════ -->
+    <section id="tab-compliance" class="tab-content">
+      <div class="compliance-grid" id="compliance-cards"></div>
+      <div class="compliance-note">
+        <strong>AFIR Article 5</strong> requires all CPOs to publish ad-hoc prices at every charging station in a machine-readable format. Italy enforces this via ARERA regulation. Missing or outdated prices can trigger fines.
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <span>ChargeIntel Italy · ARERA/AFIR Price Intelligence</span>
+      <span id="footer-data-note">Data: Open Charge Map + public CPO feeds · 12h refresh</span>
+    </div>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
