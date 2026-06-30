@@ -1,256 +1,770 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChargeIntel Italy — CPO Pricing Strategy Tool</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pricing Advisor · Italy</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563EB'/%3E%3Cpath d='M55 15 L30 55 L48 55 L42 85 L72 42 L52 42 Z' fill='white'/%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F6F7FA;--white:#fff;--border:#E5E8EE;--border2:#CFD5DF;
+  --text:#0F172A;--body:#374151;--muted:#6B7280;--faint:#9CA3AF;
+  --blue:#2563EB;--blue-d:#1D4ED8;--blue-l:#EFF6FF;--blue-b:#BFDBFE;
+  --green:#059669;--green-l:#ECFDF5;--green-b:#A7F3D0;
+  --amber:#D97706;--amber-l:#FFFBEB;--amber-b:#FDE68A;
+  --red:#DC2626;--red-l:#FEF2F2;--red-b:#FECACA;
+  --purple:#7C3AED;--purple-l:#F5F3FF;
+  --sci:#0F172A;
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:8px;--rl:14px;
+  --sh:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shm:0 6px 20px rgba(0,0,0,.08);
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.65}
+
+/* ═══ TOP BAR ═══ */
+.topbar{background:var(--white);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:500;box-shadow:var(--sh)}
+.tb-logo{display:flex;align-items:center;gap:10px}
+.tb-mark{width:30px;height:30px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.tb-mark svg{width:16px;height:16px}
+.tb-name{font-size:15px;font-weight:700;letter-spacing:-.3px}
+.tb-name b{color:var(--blue)}.tb-name span{color:var(--muted);font-weight:400;font-size:12px}
+.tb-progress{flex:1;max-width:340px;margin:0 28px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.tb-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),#60A5FA);border-radius:3px;transition:width .4s}
+.tb-step-lbl{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+
+/* ═══ CHARGER TYPE TABS (sticky, always visible) ═══ */
+.type-bar{background:var(--white);border-bottom:1px solid var(--border);padding:12px 28px;position:sticky;top:56px;z-index:400}
+.type-tabs{max-width:880px;margin:0 auto;display:flex;gap:8px}
+.type-tab{flex:1;border:2px solid var(--border);background:var(--white);border-radius:var(--rl);padding:10px 14px;cursor:pointer;transition:all .15s;text-align:left;display:flex;align-items:center;justify-content:space-between}
+.type-tab .tt-left{display:flex;align-items:center;gap:9px}
+.type-tab .tt-icon{font-size:18px}
+.type-tab .tt-name{font-size:13px;font-weight:700;color:var(--text)}
+.type-tab .tt-price{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--faint)}
+.tt-vs{font-size:9px;font-family:var(--mono);font-weight:600;margin-top:1px}
+.tt-vs.below{color:var(--green)}
+.tt-vs.above{color:var(--red)}
+.type-tab.active{border-color:var(--blue);background:var(--blue-l)}
+.type-tab.active .tt-name,.type-tab.active .tt-price{color:var(--blue)}
+.type-tab.inactive{opacity:.5}
+
+/* ═══ MAIN — single column scrollable ═══ */
+main{max-width:880px;margin:0 auto;padding:28px 28px 100px}
+.step{margin-bottom:20px;scroll-margin-top:140px}
+.step-card{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh)}
+.step-header{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:#FAFBFC}
+.step-num{width:28px;height:28px;border-radius:8px;background:var(--blue);color:#fff;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono)}
+.step-title{font-size:15px;font-weight:700;flex:1}
+.step-sub{font-size:12px;color:var(--muted)}
+.step-body{padding:24px}
+
+/* ═══ SOURCE CHIP — every claim gets one ═══ */
+.src-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--blue);background:var(--blue-l);border:1px solid var(--blue-b);border-radius:5px;padding:2px 7px;text-decoration:none;margin-left:6px;white-space:nowrap;transition:all .15s}
+.src-chip:hover{background:var(--blue);color:#fff}
+.src-chip svg{width:9px;height:9px}
+
+/* ═══ FIELDS ═══ */
+.fi{margin-bottom:18px}
+.fi:last-child{margin-bottom:0}
+.fi-lbl-row{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:5px}
+.fi-lbl{font-size:13px;font-weight:600;color:var(--text)}
+.fi-hint{display:none}
+.info-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--amber);color:#fff;font-size:10px;font-weight:700;font-style:normal;font-family:var(--font);cursor:help;flex-shrink:0;user-select:none;box-shadow:0 0 0 3px var(--amber-l)}
+.info-tip:hover,.info-tip:focus{background:#B45309}
+.info-tip .tip-box{display:none;position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);width:260px;background:var(--sci);color:#E2E8F0;font-size:11px;font-weight:400;font-style:normal;font-family:var(--font);line-height:1.6;padding:10px 12px;border-radius:8px;box-shadow:var(--shm);z-index:50;text-align:left}
+.info-tip:hover .tip-box,.info-tip:focus .tip-box{display:block}
+.info-tip .tip-box::before{content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-bottom-color:var(--sci)}
+.tip-src{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#0F172A;background:var(--amber-l);border:1px solid var(--amber-b);border-radius:5px;padding:2px 7px;text-decoration:none;cursor:pointer;flex-shrink:0}
+.tip-src:hover{background:var(--amber);color:#fff}
+.tip-src:hover{background:rgba(217,119,6,.32)}
+.tip-src svg{width:8px;height:8px}
+.fi-input{display:flex;align-items:center;border:1.5px solid var(--border);border-radius:var(--r);background:var(--white);overflow:hidden;max-width:280px}
+.fi-input:focus-within{border-color:var(--blue)}
+.fi-input input{flex:1;border:none;outline:none;padding:10px 12px;font-size:15px;font-weight:600;font-family:var(--mono);color:var(--text);background:transparent;min-width:0}
+.fi-unit{padding:10px 12px;font-size:12px;color:var(--muted);font-family:var(--mono);background:var(--bg);border-left:1px solid var(--border)}
+.fi-range-note{font-size:11px;color:var(--faint);margin-top:5px;font-family:var(--mono)}
+
+.subgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.subgrid{grid-template-columns:1fr}}
+
+.cat-block{border-radius:var(--rl);padding:18px 20px;margin-bottom:14px;border-left:4px solid}
+.cat-block.elec{background:var(--bg);border-color:var(--blue-b)}
+.cat-block.opex{background:var(--bg);border-color:var(--green-b)}
+.cat-block.capex{background:var(--bg);border-color:var(--amber-b)}
+.cat-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}
+.cat-title.elec{color:var(--muted)}.cat-title.opex{color:var(--muted)}.cat-title.capex{color:var(--muted)}
+
+.min-price-banner{background:var(--sci);border-radius:var(--rl);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;margin-top:6px}
+.mpb-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94A3B8}
+.mpb-val{font-size:26px;font-weight:700;font-family:var(--mono);color:#fff}
+.mpb-sub{font-size:11px;color:#64748B;margin-top:2px}
+
+/* ═══ STRATEGY ═══ */
+.strat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:16px}
+.strat-btn{border:2px solid var(--border);background:var(--white);border-radius:var(--rl);padding:13px 8px;cursor:pointer;text-align:center;transition:all .15s}
+.strat-btn.active{border-color:var(--blue);background:var(--blue-l)}
+.strat-btn .sb-name{font-size:11px;font-weight:700;color:var(--muted)}
+.strat-btn.active .sb-name{color:var(--blue)}
+.strat-explain{background:var(--bg);border:1px solid var(--border);border-radius:var(--rl);padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
+.strat-explain-icon{font-size:20px;flex-shrink:0}
+.strat-explain-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.strat-explain-text{font-size:13px;color:var(--body);line-height:1.6}
+@media(max-width:600px){.strat-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* ═══ MARKET STATS ═══ */
+.bench-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.bstat{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:13px 14px;text-align:center}
+.bstat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+.bstat-val{font-size:18px;font-weight:700;font-family:var(--mono)}
+.bstat.you{background:var(--blue-l);border-color:var(--blue-b)}
+.bstat.you .bstat-val{color:var(--blue)}
+@media(max-width:600px){.bench-stats{grid-template-columns:repeat(2,1fr)}}
+
+.view-toggle{display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px}
+.view-toggle-btn{border:none;background:transparent;font-size:11px;font-weight:600;color:var(--muted);padding:6px 12px;border-radius:6px;cursor:pointer;transition:all .15s;font-family:var(--font)}
+.view-toggle-btn.active{background:var(--white);color:var(--blue);box-shadow:var(--sh)}
+.view-toggle-btn:hover:not(.active){color:var(--text)}
+
+.bench-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.bench-tbl th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid var(--border);background:#F8FAFC}
+.bench-tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.bench-tbl tr:last-child td{border-bottom:none}
+.bench-tbl tr.you-row{background:var(--blue-l)}
+.price-cell{font-family:var(--mono);font-weight:600}
+.you-tag{font-size:8px;font-weight:700;background:var(--blue);color:#fff;border-radius:3px;padding:1px 5px;margin-left:5px}
+.src-tag{font-size:9px;font-family:var(--mono);padding:2px 6px;border-radius:4px;font-weight:600}
+.src-official{background:var(--green-l);color:var(--green);border:1px solid var(--green-b)}
+.src-survey{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.src-ocpi{background:var(--purple-l);color:var(--purple);border:1px solid #DDD6FE}
+.src-estimated{background:var(--amber-l);color:var(--amber);border:1px solid var(--amber-b)}
+.src-you{background:var(--blue);color:#fff}
+
+/* ═══ ABRP LINK ═══ */
+.abrp-card{background:linear-gradient(135deg,#1E293B,#0F172A);border-radius:var(--rl);padding:18px 20px;display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap;margin-top:16px}
+.abrp-left{flex:1;min-width:200px}
+.abrp-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.abrp-sub{font-size:11px;color:#94A3B8}
+.abrp-btn{background:#fff;color:var(--sci);border:none;border-radius:var(--r);padding:10px 18px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.abrp-btn:hover{background:#E2E8F0}
+
+/* ═══ RECOMMENDATION ═══ */
+.rec-hero{background:linear-gradient(135deg,#0F172A,#1E293B);border-radius:var(--rl);padding:30px 30px;text-align:center;margin-bottom:18px}
+.rec-hero-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#60A5FA;margin-bottom:10px}
+.rec-hero-price{font-size:46px;font-weight:700;font-family:var(--mono);color:#fff;line-height:1}
+.rec-hero-unit{font-size:14px;color:#94A3B8;margin-top:4px}
+.reason-list{display:flex;flex-direction:column;gap:9px}
+.reason-row{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--body);padding:12px 14px;background:var(--green-l);border:1px solid var(--green-b);border-radius:var(--r)}
+.reason-check{color:var(--green);font-weight:700;flex-shrink:0;margin-top:1px}
+.reason-row b{color:var(--text)}
+
+/* ═══ SOURCES SUMMARY ═══ */
+.sources-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--rl);padding:20px 22px;margin-top:6px}
+.sources-title{font-size:13px;font-weight:700;margin-bottom:12px}
+.source-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.source-row:last-child{border-bottom:none}
+.source-row a{color:var(--blue);text-decoration:none;font-weight:600}
+.source-row a:hover{text-decoration:underline}
+
+footer{border-top:1px solid var(--border);background:var(--white);padding:16px 0;margin-top:20px}
+.footer-inner{max-width:880px;margin:0 auto;padding:0 28px;display:flex;justify-content:space-between;font-size:11px;color:var(--faint);font-family:var(--mono)}
+</style>
 </head>
 <body>
 
-  <!-- ── HEADER ── -->
-  <header>
-    <div class="container header-inner">
-      <div class="logo">
-        <span class="logo-icon">⚡</span>
-        <div>
-          <div class="logo-name">ChargeIntel <span class="flag">🇮🇹</span></div>
-          <div class="logo-sub">CPO Pricing Strategy Tool · Italy</div>
-        </div>
-      </div>
-      <div class="live-badge">
-        <span class="pulse-dot"></span>
-        <span id="data-status">Loading live data…</span>
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="tb-logo">
+    <div class="tb-mark"><svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M55 15 L30 55 L48 55 L42 85 L72 42 L52 42 Z" fill="white"/></svg></div>
+    <div class="tb-name">Pricing <b>Advisor</b><span>— Italy</span></div>
+  </div>
+  <div class="tb-progress"><div class="tb-progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <span class="tb-step-lbl" id="progress-lbl">Scroll to begin</span>
+</div>
+
+<!-- CHARGER TYPE TABS -->
+<div class="type-bar">
+  <div class="type-tabs">
+    <div class="type-tab active" data-type="ac" onclick="switchType('ac',this)">
+      <div class="tt-left"><span class="tt-icon">🔌</span><span class="tt-name">AC</span></div>
+      <div style="text-align:right">
+        <div class="tt-price" id="tab-price-ac">—</div>
+        <div class="tt-vs" id="tab-vs-ac">—</div>
       </div>
     </div>
-  </header>
+    <div class="type-tab inactive" data-type="dc" onclick="switchType('dc',this)">
+      <div class="tt-left"><span class="tt-icon">⚡</span><span class="tt-name">DC</span></div>
+      <div style="text-align:right">
+        <div class="tt-price" id="tab-price-dc">—</div>
+        <div class="tt-vs" id="tab-vs-dc">—</div>
+      </div>
+    </div>
+    <div class="type-tab inactive" data-type="hpc" onclick="switchType('hpc',this)">
+      <div class="tt-left"><span class="tt-icon">🚀</span><span class="tt-name">HPC</span></div>
+      <div style="text-align:right">
+        <div class="tt-price" id="tab-price-hpc">—</div>
+        <div class="tt-vs" id="tab-vs-hpc">—</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-  <!-- ── ALERT BAR ── -->
-  <div class="alert-bar">
-    <div class="container">
-      ⚠️ <strong>AFIR Art.5 + ARERA transparency rules</strong> — Italy mandates published ad-hoc prices at every public charging station. Non-compliance risks fines up to €100,000 per violation.
+<main>
+
+  <!-- STEP 1: COST MODEL -->
+  <div class="step" id="step-1">
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div><div class="step-title">Cost model</div><div class="step-sub">Determines your minimum profitable price</div></div>
+      </div>
+      <div class="step-body">
+
+        <div class="cat-block elec">
+          <div class="cat-title elec">Electricity &amp; grid</div>
+          <div class="subgrid">
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Electricity purchase price</span>
+                <span class="info-tip" tabindex="0">!<span class="tip-box">Italian business electricity rate: €0.247/kWh (Sept 2025, all-in incl. distribution, transmission and taxes), citing Edison, Enel, Eni and Italy's energy regulator ARERA.</span></span>
+                <a class="tip-src" href="https://www.globalpetrolprices.com/Italy/electricity_prices/" target="_blank">info</a>
+              </div>
+              <div class="fi-input"><input type="number" id="elec" value="0.18" step="0.01" oninput="calc()"/><span class="fi-unit">€/kWh</span></div>
+            </div>
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Grid charges + taxes</span>
+                <span class="info-tip" tabindex="0">!<span class="tip-box">Italy's reference electricity price (ARERA, from 1 Jan 2026) is €0.3024/kWh including taxes — the gap above the wholesale/business rate is mostly grid fees + taxes.</span></span>
+                <a class="tip-src" href="https://www.enel.it/en-us/assistenza/avvisi/andamento-arera-luce-gas" target="_blank">info</a>
+              </div>
+              <div class="fi-input"><input type="number" id="grid" value="0.06" step="0.005" oninput="calc()"/><span class="fi-unit">€/kWh</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block opex">
+          <div class="cat-title opex">Operating costs</div>
+          <div class="subgrid">
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Roaming / platform fee</span>
+                <span class="info-tip" tabindex="0">!<span class="tip-box">Hubject/Gireve-style roaming hub fees typically run a few cents per kWh, or a low single-digit % of session revenue.</span></span>
+                <a class="tip-src" href="https://codibly.com/blog/articles/ev-roaming-solutions" target="_blank">info</a>
+              </div>
+              <div class="fi-input"><input type="number" id="opex1" value="0.03" step="0.005" oninput="calc()"/><span class="fi-unit">€/kWh</span></div>
+            </div>
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Maintenance + support</span>
+                <span class="info-tip" tabindex="0">!<span class="tip-box">U.S. Dept. of Energy benchmark: up to $400/year per AC charger; DC fast chargers roughly double that.</span></span>
+                <a class="tip-src" href="https://afdc.energy.gov/fuels/electricity-infrastructure-maintenance-and-operation" target="_blank">info</a>
+              </div>
+              <div class="fi-input"><input type="number" id="opex2" value="0.04" step="0.005" oninput="calc()"/><span class="fi-unit">€/kWh</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block capex">
+          <div class="cat-title capex">Hardware — <span id="capex-type-label">AC</span></div>
+          <div class="subgrid">
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Hardware + install cost</span>
+                <span class="info-tip" tabindex="0" id="hw-tip">!<span class="tip-box"><span id="hw-hint">Typical EU commercial 22kW: €3,500–€9,000 installed (hardware + civils).</span></span></span>
+                <a class="tip-src" href="https://euenergy.live/articles/ev-charging-stations-cost" target="_blank">info</a>
+              </div>
+              <div class="fi-input"><input type="number" id="hw-cost" value="4500" step="100" oninput="calc()"/><span class="fi-unit">€</span></div>
+            </div>
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Lifetime kWh delivered</span>
+                <span class="info-tip" tabindex="0">!<span class="tip-box">Hardware cost ÷ kWh delivered over its working life = amortisation per kWh. Estimate from your expected daily sessions × average kWh per session × charger lifespan (typically 8–10 years for AC, 6–8 years for DC/HPC due to heavier duty cycles).</span></span>
+              </div>
+              <div class="fi-input"><input type="number" id="hw-kwh" value="60000" step="1000" oninput="calc()"/><span class="fi-unit">kWh</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-block" style="background:var(--bg);border-color:#DDD6FE">
+          <div class="cat-title" style="color:var(--muted)">Extra revenue (optional)</div>
+          <div class="subgrid">
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Parking / overstay fee</span>
+                <span class="info-tip" tabindex="0">!<span class="tip-box">Charged once a session ends and the car stays plugged in. Real examples: Allego charges €0.05–0.25/min depending on charger type and country; Tesla applies ~€0.50/min after a short grace period; DC fast-charger idle fees across networks commonly range €0.35–0.90/min. Set to 0 if you don't charge one.</span></span>
+                <a class="tip-src" href="https://www.allego.eu/overstay-fee/" target="_blank">info</a>
+              </div>
+              <div class="fi-input"><input type="number" id="park-rate" value="0" step="0.01" oninput="calc()"/><span class="fi-unit">€/min</span></div>
+            </div>
+            <div class="fi">
+              <div class="fi-lbl-row">
+                <span class="fi-lbl">Session start fee</span>
+                <span class="info-tip" tabindex="0">!<span class="tip-box">A flat fee charged per session regardless of energy used, common near hotels and destination charging. Less common at competitive public DC/HPC sites, where it can push drivers to a cheaper neighbour. Set to 0 if you don't charge one.</span></span>
+              </div>
+              <div class="fi-input"><input type="number" id="sess-fee" value="0" step="0.1" oninput="calc()"/><span class="fi-unit">€</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="cost-bar-wrap" style="margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Cost breakdown</div>
+          <div id="cost-bar" style="display:flex;width:100%;height:22px;border-radius:6px;overflow:hidden"></div>
+          <div id="cost-bar-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px;font-size:10px;color:var(--muted)"></div>
+        </div>
+        <div class="min-price-banner">
+          <div><div class="mpb-label">Minimum profitable price</div><div class="mpb-sub">Total cost per kWh, before margin</div></div>
+          <div class="mpb-val" id="min-price">—</div>
+        </div>
+        <div style="padding:8px 2px 0;font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.7">
+          <span style="font-weight:600;color:var(--muted);font-family:var(--font);text-transform:uppercase;letter-spacing:.05em;font-size:10px">Formula:</span>
+          min_price = electricity + grid + roaming + maintenance + (hardware ÷ lifetime_kWh)
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- ── MAIN ── -->
-  <main class="container">
-
-    <!-- NAV TABS -->
-    <nav class="tabs">
-      <button class="tab active" data-tab="calculator">Pricing calculator</button>
-      <button class="tab" data-tab="market">Market benchmarks</button>
-      <button class="tab" data-tab="compliance">Compliance checker</button>
-    </nav>
-
-    <!-- ════════════════════════════════════════
-         TAB 1: CALCULATOR
-    ════════════════════════════════════════ -->
-    <section id="tab-calculator" class="tab-content active">
-
-      <div class="two-col">
-
-        <!-- LEFT: Inputs -->
-        <div class="inputs-panel">
-
-          <div class="panel-section">
-            <div class="section-label">1 — Your operating costs</div>
-            <div class="slider-row">
-              <label>Electricity purchase price</label>
-              <input type="range" id="elec" min="0.05" max="0.35" step="0.01" value="0.18" />
-              <span class="val" id="elec-v">€0.18/kWh</span>
-            </div>
-            <div class="slider-row">
-              <label>Roaming / platform fee</label>
-              <input type="range" id="net" min="0" max="0.10" step="0.005" value="0.03" />
-              <span class="val" id="net-v">€0.030/kWh</span>
-            </div>
-            <div class="slider-row">
-              <label>Hardware amortisation (AC base)</label>
-              <input type="range" id="capex" min="0.01" max="0.20" step="0.005" value="0.07" />
-              <span class="val" id="capex-v">€0.070/kWh</span>
-            </div>
-            <div class="slider-row">
-              <label>Ops &amp; maintenance</label>
-              <input type="range" id="ops" min="0.01" max="0.10" step="0.005" value="0.04" />
-              <span class="val" id="ops-v">€0.040/kWh</span>
-            </div>
-            <div class="slider-row">
-              <label>Target margin</label>
-              <input type="range" id="margin" min="5" max="50" step="1" value="20" />
-              <span class="val" id="margin-v">20%</span>
-            </div>
+  <!-- STEP 2: PRICING STRATEGY -->
+  <div class="step" id="step-2">
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div><div class="step-title">Pricing strategy</div><div class="step-sub">Each charger type keeps its own strategy</div></div>
+      </div>
+      <div class="step-body">
+        <div class="strat-grid" id="strat-grid"></div>
+        <div class="strat-explain">
+          <span class="strat-explain-icon" id="strat-icon">📊</span>
+          <div>
+            <div class="strat-explain-title" id="strat-title">Market average</div>
+            <div class="strat-explain-text" id="strat-text">Stay close to the average market price.</div>
           </div>
-
-          <div class="panel-section">
-            <div class="section-label">2 — Charger type cost multipliers</div>
-            <p class="hint">DC and HPC have higher capex and peak demand charges than AC.</p>
-            <div class="slider-row">
-              <label>DC capex multiplier vs AC</label>
-              <input type="range" id="dc-mult" min="1.0" max="3.0" step="0.1" value="1.8" />
-              <span class="val" id="dc-mult-v">×1.8</span>
-            </div>
-            <div class="slider-row">
-              <label>HPC capex multiplier vs AC</label>
-              <input type="range" id="hpc-mult" min="1.5" max="5.0" step="0.1" value="3.2" />
-              <span class="val" id="hpc-mult-v">×3.2</span>
-            </div>
-            <div class="slider-row">
-              <label>Peak demand surcharge (DC/HPC)</label>
-              <input type="range" id="peak" min="0" max="0.08" step="0.005" value="0.025" />
-              <span class="val" id="peak-v">€0.025/kWh</span>
-            </div>
-          </div>
-
-          <div class="panel-section">
-            <div class="section-label">3 — Strategy &amp; location</div>
-            <div class="select-row">
-              <label>Location type</label>
-              <select id="location">
-                <option value="urban">Urban / city centre</option>
-                <option value="highway" selected>Highway / motorway</option>
-                <option value="destination">Destination / shopping</option>
-                <option value="residential">Residential / workplace</option>
-              </select>
-            </div>
-            <div class="select-row">
-              <label>Pricing strategy</label>
-              <select id="strategy">
-                <option value="competitive">Competitive — beat market avg</option>
-                <option value="market" selected>Market rate — match avg</option>
-                <option value="premium">Premium — above avg</option>
-              </select>
-            </div>
-          </div>
-
         </div>
-
-        <!-- RIGHT: Results -->
-        <div class="results-panel">
-
-          <!-- KPI cards -->
-          <div class="kpi-grid">
-            <div class="kpi-card">
-              <div class="kpi-type">AC <span class="kpi-power">7–22 kW</span></div>
-              <div class="kpi-price" id="out-ac">—</div>
-              <div class="kpi-break" id="be-ac">breakeven —</div>
-              <div class="kpi-margin" id="mg-ac">— margin</div>
-              <div class="kpi-badge" id="badge-ac"></div>
-            </div>
-            <div class="kpi-card">
-              <div class="kpi-type">DC <span class="kpi-power">50–150 kW</span></div>
-              <div class="kpi-price" id="out-dc">—</div>
-              <div class="kpi-break" id="be-dc">breakeven —</div>
-              <div class="kpi-margin" id="mg-dc">— margin</div>
-              <div class="kpi-badge" id="badge-dc"></div>
-            </div>
-            <div class="kpi-card">
-              <div class="kpi-type">HPC <span class="kpi-power">150–350 kW</span></div>
-              <div class="kpi-price" id="out-hpc">—</div>
-              <div class="kpi-break" id="be-hpc">breakeven —</div>
-              <div class="kpi-margin" id="mg-hpc">— margin</div>
-              <div class="kpi-badge" id="badge-hpc"></div>
-            </div>
-          </div>
-
-          <!-- Chart -->
-          <div class="chart-card">
-            <div class="chart-legend">
-              <span class="leg-item"><span class="leg-dot" style="background:#2a78d6"></span>Your price</span>
-              <span class="leg-item"><span class="leg-dot" style="background:#c3c2b7"></span>Italy avg <span id="data-source-tag" class="source-tag">loading…</span></span>
-            </div>
-            <div style="position:relative;height:200px;">
-              <canvas id="priceChart" role="img" aria-label="Bar chart comparing your prices against Italian CPO averages"></canvas>
-            </div>
-          </div>
-
-          <!-- Market rank -->
-          <div class="rank-card">
-            <div class="rank-title">Your DC rank among Italian CPOs</div>
-            <div id="rank-list" class="rank-list"></div>
-            <div class="rank-footer" id="rank-footer">— data loading —</div>
-          </div>
-
-          <!-- AI advisor -->
-          <div class="ai-card">
-            <div class="ai-header">
-              <span class="ai-title">AI pricing advisor</span>
-              <span class="ai-sub">Claude · live Italy CPO context</span>
-            </div>
-            <div class="ai-body" id="ai-msg">
-              Set your costs above, then click "Get AI recommendation" for a personalised strategy.
-            </div>
-            <button class="ai-btn" id="ai-btn" onclick="askAI()">Get AI recommendation ↗</button>
-          </div>
-
+        <div style="font-size:11px;color:var(--faint);margin-top:12px;line-height:1.6">
+          Price sensitivity modelled using published EV-charging demand elasticity estimates of
+          <b>−0.3 to −0.5</b>
+          — a 10% price change shifts demand by roughly 3–5%, not proportionally.
+          <a class="tip-src" href="https://www.sciencedirect.com/science/article/abs/pii/S2210670724006607" target="_blank">info</a>
         </div>
       </div>
-    </section>
-
-    <!-- ════════════════════════════════════════
-         TAB 2: MARKET BENCHMARKS
-    ════════════════════════════════════════ -->
-    <section id="tab-market" class="tab-content">
-      <div class="market-header">
-        <div>
-          <div class="section-label" style="margin-bottom:4px">Italian CPO price benchmarks</div>
-          <div class="hint" id="market-timestamp">Data last refreshed: loading…</div>
-        </div>
-        <button class="refresh-btn" onclick="refreshData()">↻ Refresh data</button>
-      </div>
-
-      <div class="type-tabs">
-        <button class="type-tab active" data-type="dc" onclick="switchType('dc',this)">DC (50–150 kW)</button>
-        <button class="type-tab" data-type="ac" onclick="switchType('ac',this)">AC (7–22 kW)</button>
-        <button class="type-tab" data-type="hpc" onclick="switchType('hpc',this)">HPC (150–350 kW)</button>
-      </div>
-
-      <div class="market-table-wrap">
-        <table class="market-table" id="market-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>CPO</th>
-              <th>Operator ID</th>
-              <th>Stations</th>
-              <th>Price</th>
-              <th>Platform</th>
-              <th>Compliance</th>
-              <th>Source</th>
-              <th>Updated</th>
-            </tr>
-          </thead>
-          <tbody id="market-tbody"></tbody>
-        </table>
-      </div>
-
-      <div class="market-chart-wrap">
-        <div style="position:relative;height:260px;">
-          <canvas id="marketChart" role="img" aria-label="Bar chart of Italian CPO prices"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- ════════════════════════════════════════
-         TAB 3: COMPLIANCE
-    ════════════════════════════════════════ -->
-    <section id="tab-compliance" class="tab-content">
-      <div class="compliance-grid" id="compliance-cards"></div>
-      <div class="compliance-note">
-        <strong>AFIR Article 5</strong> requires all CPOs to publish ad-hoc prices at every charging station in a machine-readable format. Italy enforces this via ARERA regulation. Missing or outdated prices can trigger fines.
-      </div>
-    </section>
-
-  </main>
-
-  <footer>
-    <div class="container footer-inner">
-      <span>ChargeIntel Italy · ARERA/AFIR Price Intelligence</span>
-      <span id="footer-data-note">Data: Open Charge Map + public CPO feeds · 12h refresh</span>
     </div>
-  </footer>
+  </div>
 
-  <script src="data.js"></script>
-  <script src="app.js"></script>
+  <!-- STEP 3: RECOMMENDATION -->
+  <div class="step" id="step-3">
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div><div class="step-title">Recommendation</div><div class="step-sub">Why this price</div></div>
+      </div>
+      <div class="step-body">
+        <div class="rec-hero">
+          <div class="rec-hero-label">Recommended price — <span id="rec-type-label">AC</span></div>
+          <div class="rec-hero-price" id="rec-price">—</div>
+          <div class="rec-hero-unit">per kWh</div>
+        </div>
+        <div style="padding:8px 2px 14px;font-family:var(--mono);font-size:10.5px;color:var(--faint);line-height:1.7">
+          <span style="font-weight:600;color:var(--muted);font-family:var(--font);text-transform:uppercase;letter-spacing:.05em;font-size:10px">Formula:</span>
+          min_price = electricity + grid + roaming + maintenance + (hardware ÷ lifetime_kWh) · target_price = market_average × strategy_multiplier · recommended_price = MAX(min_price × 1.12, target_price)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 4: MARKET BENCHMARK -->
+  <div class="step" id="step-4">
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div><div class="step-title">Market benchmark — <span id="bench-type-label">AC</span></div><div class="step-sub">Italian CPO comparison, sourced</div></div>
+      </div>
+      <div class="step-body">
+        <div class="bench-stats">
+          <div class="bstat"><div class="bstat-lbl">Median</div><div class="bstat-val" id="b-median">—</div></div>
+          <div class="bstat"><div class="bstat-lbl">Lowest</div><div class="bstat-val" id="b-low">—</div></div>
+          <div class="bstat"><div class="bstat-lbl">Highest</div><div class="bstat-val" id="b-high">—</div></div>
+          <div class="bstat you"><div class="bstat-lbl">Your price</div><div class="bstat-val" id="b-you">—</div></div>
+        </div>
+
+        <div class="abrp-card" style="margin-bottom:18px">
+          <div class="abrp-left">
+            <div class="abrp-title">Check competitor stations near your charger</div>
+            <div class="abrp-sub">One of the biggest factors in pricing is what's physically nearby. Open ABRP, enter your charger's location, and compare the prices of competing stations within a few km — local competition often matters more than the national average shown above.</div>
+          </div>
+          <a class="abrp-btn" id="abrp-link-mid" href="https://abetterrouteplanner.com/" target="_blank">
+            Open in ABRP
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg>
+          </a>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Price comparison — <span id="chart-type-label">AC</span></div>
+          <div class="view-toggle">
+            <button class="view-toggle-btn active" id="vt-chart" onclick="switchBenchView('chart')">📊 Chart</button>
+            <button class="view-toggle-btn" id="vt-table" onclick="switchBenchView('table')">☰ Table</button>
+          </div>
+        </div>
+
+        <div id="bench-view-chart">
+          <canvas id="bench-chart" height="220"></canvas>
+        </div>
+
+        <div id="bench-view-table" style="display:none">
+          <div style="overflow-x:auto">
+            <table class="bench-tbl">
+              <thead><tr><th>#</th><th>Operator</th><th>Price</th><th style="display:flex;align-items:center;gap:5px">Info
+                <span class="info-tip" tabindex="0">!<span class="tip-box" style="width:300px;text-align:left">
+                  <b style="color:#fff">Official</b> — fetched directly from the operator's own published tariff page or PDF.<br/><br/>
+                  <b style="color:#fff">OCPI</b> — price as resold via another operator's app/roaming agreement, not the CPO's own direct tariff.<br/><br/>
+                  <b style="color:#fff">Survey</b> — from an independent monthly price survey, not fetched directly from the operator.<br/><br/>
+                  <b style="color:#fff">Estimated</b> — no public tariff page exists for this operator; figure cross-checked from secondary sources, lower confidence.
+                </span></span>
+              </th></tr></thead>
+              <tbody id="bench-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHY THIS PRICE -->
+  <div class="step" id="step-4b">
+    <div class="step-card">
+      <div class="step-header">
+        <div class="step-num">✓</div>
+        <div><div class="step-title">Why this price</div><div class="step-sub">Reasoning behind the recommendation</div></div>
+      </div>
+      <div class="step-body">
+        <div class="reason-list" id="reason-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOURCES SUMMARY -->
+  <div class="step" id="step-5">
+    <div class="sources-panel">
+      <div class="sources-title">📚 All sources used in this calculation</div>
+      <div class="source-row"><span>AC/DC/HPC hardware &amp; install costs (EU 2026)</span><a href="https://euenergy.live/articles/ev-charging-stations-cost" target="_blank">euenergy.live ↗</a></div>
+      <div class="source-row"><span>Italian CPO benchmark — 20 operators, 439 tariffs</span><a href="https://adiconsum.it/iniziative/osservatorio-prezzi-delle-tariffe-di-ricarica-della-mobilita-elettrica/" target="_blank">Adiconsum/TariffEV ↗</a></div>
+      <div class="source-row"><span>Pan-European DC/HPC price report</span><a href="https://eleport.com/price-report/" target="_blank">Eleport ↗</a></div>
+      <div class="source-row"><span>EV charging price elasticity (−0.3 to −0.5)</span><a href="https://www.sciencedirect.com/science/article/abs/pii/S2210670724006607" target="_blank">ScienceDirect ↗</a></div>
+      <div class="source-row"><span>Live competitor stations near your route</span><a href="https://abetterrouteplanner.com/" target="_blank">ABRP ↗</a></div>
+    </div>
+  </div>
+
+</main>
+
+
+<footer><div class="footer-inner">
+  <span>CPO-Desk.Italy · Pricing Advisor</span>
+  <span>Every numeric claim above is linked to its source</span>
+</div></footer>
+
+<script>
+// ════ DATA ════════════════════════════════════════════════════════
+const TYPE_DEFAULTS = {
+  ac:{hw:4500,kwh:60000,opex1:0.03,opex2:0.04,hint:"Typical EU commercial 22kW: €3,500–€9,000 installed (hardware + civils)."},
+  dc:{hw:35000,kwh:150000,opex1:0.035,opex2:0.05,hint:"Typical EU 50–150kW DC fast charger: €25,000–€140,000 installed."},
+  hpc:{hw:200000,kwh:480000,opex1:0.04,opex2:0.06,hint:"Typical EU 300–350kW ultra-fast charger: €130,000–€420,000 installed."},
+};
+
+const STRATEGIES = {
+  penetration:{n:"Aggressive Growth",icon:"📈",mult:0.90,
+    text:"Charge below competitors to increase utilisation and market share. Demand is price-inelastic (−0.3 to −0.5), so a 10% cut typically gains only 3–5% more volume — but it can still be the right call to build a customer base."},
+  match:{n:"Market Average",icon:"📊",mult:1.0,
+    text:"Stay close to the average market price. The safest default — neither leaving margin on the table nor risking being an outlier."},
+  premium:{n:"Premium",icon:"⭐",mult:1.10,
+    text:"Charge above market because of premium location or service quality. Inelastic demand means most drivers will still pay, especially if alternatives are scarce."},
+  maximize:{n:"Maximum Profit",icon:"💰",mult:1.18,
+    text:"Optimise primarily for profit instead of utilisation. Works best with inelastic demand — small volume loss, larger margin gain."},
+  manual:{n:"Manual",icon:"✋",mult:1.0,
+    text:"Ignore recommendations and set your own price using the slider below."},
+};
+
+const MARKET = {
+  ac:[
+    {n:"EMobItaly",p:0.25,src:"survey"},
+    {n:"EVWay Route 220",p:0.35,src:"survey"},
+    {n:"Atlante",p:0.39,src:"survey"},
+    {n:"Neogy (Alto Adige)",p:0.45,src:"official"},
+    {n:"Enel X Way (night)",p:0.52,src:"official"},
+    {n:"Free2X (via Enel)",p:0.67,src:"ocpi"},
+    {n:"Neogy (rest of Italy)",p:0.67,src:"official"},
+    {n:"Enel X Way (day)",p:0.67,src:"official"},
+    {n:"Be Charge / Plenitude",p:0.65,src:"estimated"},
+    {n:"ACEA (via Enel)",p:0.69,src:"ocpi"},
+    {n:"A2A (via Enel)",p:0.72,src:"ocpi"},
+  ],
+  dc:[
+    {n:"EvWay (su Edison)",p:0.39,src:"survey"},
+    {n:"EVDC (via Enel)",p:0.45,src:"ocpi"},
+    {n:"ChargePoint (su Free To X)",p:0.48,src:"survey"},
+    {n:"Neogy (Alto Adige)",p:0.55,src:"official"},
+    {n:"Enel X Way (night)",p:0.60,src:"official"},
+    {n:"Atlante",p:0.59,src:"survey"},
+    {n:"Enel X Way (day)",p:0.75,src:"official"},
+    {n:"Neogy (rest of Italy)",p:0.79,src:"official"},
+    {n:"Be Charge / Plenitude",p:0.85,src:"estimated"},
+    {n:"ACEA (via Enel)",p:0.75,src:"ocpi"},
+    {n:"A2A (via Enel)",p:0.80,src:"ocpi"},
+  ],
+  hpc:[
+    {n:"Brennerautobahn",p:0.38,src:"survey"},
+    {n:"Tesla Supercharger",p:0.30,src:"survey"},
+    {n:"Electrip",p:0.50,src:"survey"},
+    {n:"Atlante",p:0.55,src:"survey"},
+    {n:"Neogy (Alto Adige)",p:0.55,src:"official"},
+    {n:"Electra",p:0.64,src:"survey"},
+    {n:"Smatrics",p:0.65,src:"survey"},
+    {n:"IP Motion",p:0.74,src:"survey"},
+    {n:"Ewiva (promo)",p:0.77,src:"official"},
+    {n:"Allego",p:0.805,src:"survey"},
+    {n:"Fastned",p:0.83,src:"official"},
+    {n:"Enel X Way",p:0.85,src:"official"},
+    {n:"Ewiva (standard)",p:0.86,src:"official"},
+    {n:"Ionity (from 1 Jul 2026)",p:0.91,src:"official"},
+    {n:"Neogy (rest of Italy)",p:0.98,src:"official"},
+    {n:"Free To X",p:0.94,src:"survey"},
+  ],
+};
+
+// ════ STATE ═══════════════════════════════════════════════════════
+const STATE={
+  curType:"ac",
+  strat:{ac:"match",dc:"match",hpc:"match"},
+  costs:{ac:{...TYPE_DEFAULTS.ac},dc:{...TYPE_DEFAULTS.dc},hpc:{...TYPE_DEFAULTS.hpc}},
+};
+
+const $=id=>document.getElementById(id);
+const set=(id,v)=>{const e=$(id);if(e)e.textContent=v;};
+const setH=(id,v)=>{const e=$(id);if(e)e.innerHTML=v;};
+const num=id=>parseFloat($(id)?.value)||0;
+const eu=v=>`€${(+v).toFixed(2)}`;
+
+function avgMkt(t){const p=MARKET[t].map(d=>d.p);return p.reduce((a,b)=>a+b,0)/p.length;}
+function medianMkt(t){const p=[...MARKET[t].map(d=>d.p)].sort((a,b)=>a-b);const m=Math.floor(p.length/2);return p.length%2?p[m]:(p[m-1]+p[m])/2;}
+function minMkt(t){return Math.min(...MARKET[t].map(d=>d.p));}
+function maxMkt(t){return Math.max(...MARKET[t].map(d=>d.p));}
+
+// ════ TYPE SWITCH ═════════════════════════════════════════════════
+function switchType(t,el){
+  STATE.curType=t;
+  document.querySelectorAll(".type-tab").forEach(tab=>{
+    tab.classList.toggle("active",tab.dataset.type===t);
+    tab.classList.toggle("inactive",tab.dataset.type!==t);
+  });
+  set("capex-type-label",t.toUpperCase());
+  set("bench-type-label",t.toUpperCase());
+  set("rec-type-label",t.toUpperCase());
+  $("hw-cost").value=STATE.costs[t].hw;
+  $("hw-kwh").value=STATE.costs[t].kwh;
+  $("opex1").value=STATE.costs[t].opex1;
+  $("opex2").value=STATE.costs[t].opex2;
+  set("hw-hint",TYPE_DEFAULTS[t].hint);
+  buildStrategyGrid();
+  updateABRPLink();
+  calc();
+}
+
+// ════ STRATEGY ════════════════════════════════════════════════════
+function buildStrategyGrid(){
+  const t=STATE.curType;
+  setH("strat-grid",Object.entries(STRATEGIES).map(([k,s])=>`
+    <div class="strat-btn ${STATE.strat[t]===k?'active':''}" onclick="pickStrat('${k}')">
+      <div class="sb-name">${s.n}</div>
+    </div>`).join(""));
+  updateStratExplain();
+}
+function pickStrat(k){
+  STATE.strat[STATE.curType]=k;
+  buildStrategyGrid();
+  calc();
+}
+function updateStratExplain(){
+  const s=STRATEGIES[STATE.strat[STATE.curType]];
+  set("strat-icon",s.icon);
+  set("strat-title",s.n);
+  set("strat-text",s.text);
+}
+
+// ════ COST CALC ═══════════════════════════════════════════════════
+function totalCost(t){
+  const elec=num("elec"),grid=num("grid"),op1=num("opex1"),op2=num("opex2");
+  const hw=num("hw-cost"),kwh=num("hw-kwh")||1;
+  const amort=hw/kwh;
+  STATE.costs[t]={hw:num("hw-cost"),kwh:num("hw-kwh"),opex1:op1,opex2:op2};
+  return {elec,grid,op1,op2,amort,total:elec+grid+op1+op2+amort};
+}
+
+function priceForType(t){
+  let cost;
+  if(t===STATE.curType){
+    cost=totalCost(t);
+  } else {
+    const c=STATE.costs[t];
+    const amort=c.hw/(c.kwh||1);
+    cost={elec:num("elec")||0.18,grid:num("grid")||0.06,op1:c.opex1,op2:c.opex2,amort,
+      total:(num("elec")||0.18)+(num("grid")||0.06)+c.opex1+c.opex2+amort};
+  }
+  const avg=avgMkt(t);
+  const strat=STRATEGIES[STATE.strat[t]];
+  let price=avg*strat.mult;
+  price=Math.max(cost.total*1.12,price);
+  return {price,cost};
+}
+
+// ════ MAIN CALC ═══════════════════════════════════════════════════
+function calc(){
+  ["ac","dc","hpc"].forEach(t=>{
+    const {price}=priceForType(t);
+    set(`tab-price-${t}`,eu(price));
+    const avg=avgMkt(t);
+    const diffPct=((price-avg)/avg*100);
+    const vsEl=$(`tab-vs-${t}`);
+    if(vsEl){
+      vsEl.textContent=`${diffPct>=0?"+":""}${diffPct.toFixed(0)}% vs avg ${eu(avg)}`;
+      vsEl.className="tt-vs "+(diffPct<=0?"below":"above");
+    }
+  });
+
+  const t=STATE.curType;
+  const {price,cost}=priceForType(t);
+  set("min-price",eu(cost.total));
+  set("rec-price",eu(price));
+  renderCostBar(cost);
+
+  const diff=(price-avgMkt(t))/avgMkt(t)*100;
+  const strat=STRATEGIES[STATE.strat[t]];
+
+  const reasons=[];
+  reasons.push(`Your operating costs require at least <b>${eu(cost.total)}</b>.`);
+  reasons.push(`Italian ${t.toUpperCase()} competitors charge on average <b>${eu(avgMkt(t))}</b>.`);
+  reasons.push(`You selected <b>${strat.n}</b>, so the recommendation is adjusted ${strat.mult<1?"below":strat.mult>1?"above":"close to"} the market average (${strat.mult===1?"0":(Math.round((strat.mult-1)*100))+"%"}).`);
+  reasons.push(`Demand is price-inelastic (published estimate: −0.3 to −0.5), so this adjustment changes expected volume by roughly ${Math.round(Math.abs((strat.mult-1)*100)*0.4)}%, not proportionally.`);
+  const parkRate=num("park-rate"),sessFee=num("sess-fee");
+  if(parkRate>0||sessFee>0){
+    const extras=[];
+    if(parkRate>0) extras.push(`a <b>€${parkRate.toFixed(2)}/min</b> parking fee`);
+    if(sessFee>0) extras.push(`a <b>€${sessFee.toFixed(2)}</b> session fee`);
+    reasons.push(`You also charge ${extras.join(" and ")} — these add revenue per session on top of the €/kWh price above and aren't included in the recommended price itself.`);
+  }
+  setH("reason-list",reasons.map(r=>`<div class="reason-row"><span class="reason-check">✓</span><span>${r}</span></div>`).join(""));
+
+  renderBenchmark(t,price);
+}
+
+// ════ COST BREAKDOWN BAR ══════════════════════════════════════════
+function renderCostBar(cost){
+  const parts=[
+    {label:"Electricity",val:cost.elec,color:"#2563EB"},
+    {label:"Grid+taxes",val:cost.grid,color:"#60A5FA"},
+    {label:"Roaming",val:cost.op1,color:"#059669"},
+    {label:"Maintenance",val:cost.op2,color:"#34D399"},
+    {label:"Hardware amort.",val:cost.amort,color:"#D97706"},
+  ];
+  const total=cost.total||1;
+  setH("cost-bar",parts.map(p=>{
+    const pct=(p.val/total*100);
+    return pct<=0?"":`<div style="width:${pct}%;background:${p.color}" title="${p.label}: ${eu(p.val)} (${pct.toFixed(0)}%)"></div>`;
+  }).join(""));
+  setH("cost-bar-legend",parts.map(p=>{
+    const pct=(p.val/total*100);
+    return `<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:${p.color};display:inline-block"></span>${p.label} ${pct.toFixed(0)}%</span>`;
+  }).join(""));
+}
+
+// ════ BENCHMARK ═══════════════════════════════════════════════════
+let benchChart=null;
+
+function switchBenchView(view){
+  $("vt-chart").classList.toggle("active",view==="chart");
+  $("vt-table").classList.toggle("active",view==="table");
+  $("bench-view-chart").style.display=view==="chart"?"block":"none";
+  $("bench-view-table").style.display=view==="table"?"block":"none";
+}
+function renderBenchmark(t,myPrice){
+  set("b-median",eu(medianMkt(t)));
+  set("b-low",eu(minMkt(t)));
+  set("b-high",eu(maxMkt(t)));
+  set("b-you",eu(myPrice));
+  set("chart-type-label",t.toUpperCase());
+
+  const srcLabel={official:"Official",survey:"Survey",ocpi:"OCPI",estimated:"Estimated"};
+  const rows=[...MARKET[t].map(d=>({...d,isYou:false})),{n:"You",p:myPrice,src:"you",isYou:true}]
+    .sort((a,b)=>a.p-b.p);
+  setH("bench-tbody",rows.map((r,i)=>`
+    <tr class="${r.isYou?"you-row":""}">
+      <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${i+1}</td>
+      <td>${r.n}${r.isYou?'<span class="you-tag">YOU</span>':''}</td>
+      <td class="price-cell" style="${r.isYou?"color:var(--blue)":""}">${eu(r.p)}</td>
+      <td><span class="src-tag ${r.isYou?"src-you":"src-"+r.src}">${r.isYou?"Your calc":srcLabel[r.src]}</span></td>
+    </tr>`).join(""));
+
+  // Column bar chart — neutral grey for competitors, green if your price is at/below average, red if above
+  const avg=avgMkt(t);
+  const ctx=document.getElementById("bench-chart");
+  if(ctx){
+    const labels=rows.map(r=>r.isYou?"You":r.n);
+    const data=rows.map(r=>r.p);
+    const colors=rows.map(r=>{
+      if(r.isYou) return r.p<=avg ? "#059669" : "#DC2626";
+      return "#CBD5E1";
+    });
+    const borders=rows.map(r=>r.isYou?(r.p<=avg?"#059669":"#DC2626"):"#94A3B8");
+    if(benchChart) benchChart.destroy();
+    benchChart=new Chart(ctx,{
+      type:"bar",
+      data:{labels,datasets:[{data,backgroundColor:colors,borderColor:borders,borderWidth:1.5,borderRadius:4,maxBarThickness:34}]},
+      options:{
+        responsive:true,
+        layout:{padding:{top:18}},
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:c=>`€${c.parsed.y.toFixed(2)}/kWh`}},
+          datalabels:{
+            anchor:"end",align:"top",offset:2,
+            color:"#0F172A",font:{size:10,weight:700},
+            formatter:v=>"€"+v.toFixed(2)
+          }
+        },
+        scales:{
+          y:{beginAtZero:true,ticks:{callback:v=>"€"+v.toFixed(2),font:{size:10}},grid:{color:"#E5E8EE"}},
+          x:{ticks:{font:{size:9},maxRotation:60,minRotation:0},grid:{display:false}}
+        }
+      }
+    });
+  }
+}
+
+// ════ ABRP LINK ═══════════════════════════════════════════════════
+function updateABRPLink(){
+  // Plain link to ABRP homepage, no parameters.
+  const link=$("abrp-link-mid"); if(link) link.href="https://abetterrouteplanner.com/";
+}
+
+// ════ SCROLL PROGRESS ═════════════════════════════════════════════
+function updateProgress(){
+  const steps=document.querySelectorAll(".step");
+  const scrollY=window.scrollY+200;
+  let current=0,total=steps.length;
+  steps.forEach((s,i)=>{if(s.offsetTop<scrollY) current=i+1;});
+  const pct=Math.min(100,Math.round(current/total*100));
+  $("progress-fill").style.width=pct+"%";
+  set("progress-lbl",`Step ${current} of ${total}`);
+}
+window.addEventListener("scroll",updateProgress);
+
+// ════ INIT ════════════════════════════════════════════════════════
+if(window.ChartDataLabels) Chart.register(window.ChartDataLabels);
+document.addEventListener("DOMContentLoaded",()=>{
+  buildStrategyGrid();
+  updateABRPLink();
+  calc();
+  updateProgress();
+});
+</script>
 </body>
 </html>
